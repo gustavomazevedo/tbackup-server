@@ -4,7 +4,7 @@ from django.db import models
 
 class NameableMixin(models.Model):
     name = models.CharField(verbose_name=u'nome',
-                            max_length=80)
+                            max_length=1024)
     def __unicode__(self):
         return self.name
     class Meta:
