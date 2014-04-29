@@ -6,7 +6,7 @@ import os
 #lib imports
 from django.conf     import settings
 from django.db       import models
-from tastypie.models import create_api_key
+#from tastypie.models import create_api_key
 
 #own imports
 from .mixins.model_mixins import (
