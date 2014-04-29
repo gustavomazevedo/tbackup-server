@@ -8,12 +8,13 @@ from .models import (
     Backup
 )
 from datetime import datetime
+from django.utils.timezone import utc
 from django.conf import settings
 
 import os
 
-#PATH='/Users/gustavo/'
-PATH='/home/gustavo.azevedo/Projects/'
+PATH='/Users/gustavo/'
+#PATH='/home/gustavo.azevedo/Projects/'
 
 # Create your tests here.
 
@@ -51,14 +52,11 @@ class DestinationCase(TestCase):
             get_uri  = r'/object/'
         )
         
-        
-        
-    def test_backup(self):
-        
+    def backup(self):
         origin = Origin.objects.get(pk=1)
         destination = Destination.objects.get(name='HD2')
         
-        dt = datetime.now()
+        dt = datetime.utcnow().replace(tzinfo=utc)
         fn = 'backup_%s.tar.gz' % dt.strftime(settings.DT_FORMAT)
         
         b = Backup.objects.create(
@@ -72,15 +70,21 @@ class DestinationCase(TestCase):
         
         b.backup(contents)
         
-        assert b.name == fn
-        assert b.origin == origin
-        assert b.destination == destination
-        assert b.date == dt
-        assert b.success == True
-        assert b.before_restore == False
-        assert b.after_restore == False
-        assert b.restore_dt is None
-        assert b.related_to is None
+        return b, fn, origin, destination, dt
+        
+    def test_backup(self):
+        
+        b, fn, origin, destination, dt = self.backup()
+        
+        self.assertEqual(b.name, fn)
+        self.assertEqual(b.origin, origin)
+        self.assertEqual(b.destination, destination)
+        self.assertEqual(b.date, dt)
+        self.assertTrue(b.success)
+        self.assertFalse(b.before_restore)
+        self.assertFalse(b.after_restore)
+        self.assertIsNone(b.restore_dt)
+        self.assertIsNone(b.related_to)
         
         print (b,
                b.name,
@@ -94,7 +98,7 @@ class DestinationCase(TestCase):
                b.related_to)
         
     def test_restore(self):
-        self.test_backup()
+        b = self.backup()[0]
         
         bs = Backup.objects.all()
         b = bs[0]
@@ -104,7 +108,7 @@ class DestinationCase(TestCase):
         
         data = b.restore()
         
-        assert not data is None
+        self.assertIsNotNone(data)
         
         if not data is None:
             print 'success'

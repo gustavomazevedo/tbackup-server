@@ -83,4 +83,4 @@ STATIC_URL = '/static/'
 
 #TBackup Project's specific constants
 DT_FORMAT = '%Y%m%d_%H%M'
-DT_FORMAT_VERBOSE = u'%d/%m/%Y às %H:%M'
+DT_FORMAT_VERBOSE = u'%d/%m/%Y - %H:%M'
