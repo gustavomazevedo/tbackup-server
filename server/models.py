@@ -2,10 +2,12 @@
 #language imports
 from datetime import datetime
 import os
+import errno
 
 #lib imports
 from django.conf     import settings
 from django.db       import models
+from paramiko.sftp_client import SFTPClient
 #from tastypie.models import create_api_key
 
 #own imports
@@ -96,13 +98,26 @@ class LocalDestination(Destination):
 
 class SFTPDestination(Destination, AccessableMixin):
     
-    def backup(self, *args, **kwargs):
+    def backup(self, contents, subdir, filename, *args, **kwargs):
         print "Hello! This is %s's backup method" % self.__class__.__name__
         #raise NotImplementedError
     def restore(self, filename):
         print "Hello! This is %s's restore method" % self.__class__.__name__
         #raise NotImplementedError
     
+    def _rexists(sftp, path):
+        try:
+            sftp.stat(path)
+        except IOError, e:
+            if e.errno == errno.ENOENT:
+                print e, errno
+                return False
+            else:
+                pass
+            raise
+        else:
+            return True
+        
     class Meta:
         verbose_name = u'destino SFTP'
         verbose_name_plural = u'destinos SFTP'
