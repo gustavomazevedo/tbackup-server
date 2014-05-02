@@ -24,7 +24,7 @@ class AccessableMixin(models.Model):
                                     max_length=80)
     class Meta:
         abstract = True
-    
+
 class APIMixin(models.Model):
     pubkey   = models.TextField(verbose_name=u'chave pública')
     base_uri = models.CharField(verbose_name=u'URI base',
@@ -47,4 +47,3 @@ class LoggableMixin(models.Model):
     
     class Meta:
         abstract = True
-    
