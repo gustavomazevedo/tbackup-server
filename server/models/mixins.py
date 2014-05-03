@@ -12,16 +12,16 @@ class NameableMixin(models.Model):
         ordering = ['name']
 
 class AccessableMixin(models.Model):
-    address      = models.CharField(verbose_name=u'endereço',
-                                    max_length=1024)
-    port         = models.CharField(verbose_name=u'porta',
-                                    max_length=5,
-                                    blank=True)
-    ssh_username = models.CharField(verbose_name=u'username SSH',
-                                    max_length=80,
-                                    default=u'tbackup')
-    ssh_password = models.CharField(verbose_name=u'senha de acesso SSH',
-                                    max_length=80)
+    hostname = models.CharField(verbose_name=u'endereço',
+                                max_length=1024)
+    port     = models.CharField(verbose_name=u'porta',
+                                max_length=5,
+                                blank=True)
+    username = models.CharField(verbose_name=u'username SSH',
+                                max_length=80,
+                                default=u'tbackup')
+    password = models.CharField(verbose_name=u'senha de acesso SSH',
+                                max_length=80)
     class Meta:
         abstract = True
 

@@ -38,10 +38,10 @@ class DestinationCase(TestCase):
         
         SFTPDestination.objects.create(
             name = 'Gruyere',
-            address = 'gruyere.lps.ufrj.br',
+            hostname = 'gruyere.lps.ufrj.br',
             port = '22',
-            ssh_username = 'tbackup',
-            ssh_password = '123456'
+            username = 'tbackup',
+            password = '123456'
         )
         
         APIDestination.objects.create(
