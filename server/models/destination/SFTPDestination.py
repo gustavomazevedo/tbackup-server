@@ -50,6 +50,7 @@ class SFTPDestination(BaseDestination, AccessableMixin):
                 raise
             return True
         except:
+            sftp.close()
             client.close()
             raise
     
