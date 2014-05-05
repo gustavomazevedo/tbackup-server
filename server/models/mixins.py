@@ -10,20 +10,22 @@ class NameableMixin(models.Model):
     class Meta:
         abstract = True
         ordering = ['name']
+        #app_label = 'server'
 
 class AccessableMixin(models.Model):
-    hostname = models.CharField(verbose_name=u'endereço',
-                                max_length=1024)
-    port     = models.CharField(verbose_name=u'porta',
-                                max_length=5,
-                                blank=True)
-    username = models.CharField(verbose_name=u'username SSH',
-                                max_length=80,
-                                default=u'tbackup')
-    password = models.CharField(verbose_name=u'senha de acesso SSH',
-                                max_length=80)
+    hostname     = models.CharField(verbose_name=u'endereço',
+                                    max_length=1024)
+    port         = models.CharField(verbose_name=u'porta',
+                                    max_length=5,
+                                    blank=True)
+    username     = models.CharField(verbose_name=u'username SSH',
+                                    max_length=80,
+                                    default=u'tbackup')
+    key_filename = models.CharField(verbose_name=u'caminho da chave',
+                                    max_length=80)
     class Meta:
         abstract = True
+        #app_label = 'server'
 
 class APIMixin(models.Model):
     pubkey   = models.TextField(verbose_name=u'chave pública')
@@ -37,6 +39,7 @@ class APIMixin(models.Model):
                                 default=r'/get/')
     class Meta:
         abstract = True
+        #app_label = 'server'
 
 class LoggableMixin(models.Model):
     date_created  = models.DateTimeField(verbose_name=u'data de criação',
@@ -47,3 +50,4 @@ class LoggableMixin(models.Model):
     
     class Meta:
         abstract = True
+        #app_label = 'server'

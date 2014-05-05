@@ -1,9 +1,9 @@
 #-*- coding: utf-8 -*-
 
-from .Destination import Destination
+from .BaseDestination import BaseDestination
 from ..mixins     import APIMixin
 
-class APIDestination(Destination, APIMixin):
+class APIDestination(BaseDestination, APIMixin):
     
     def backup(self, *args, **kwargs):
         print "Hello! This is %s's backup method" % self.__class__.__name__

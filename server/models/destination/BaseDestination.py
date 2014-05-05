@@ -1,18 +1,24 @@
 #-*- coding: utf-8 -*-
+from django.db import models
 
 from ..mixins import (
     NameableMixin,
     LoggableMixin
 )
 
-
-class Destination(NameableMixin, LoggableMixin):
+class BaseDestination(NameableMixin, LoggableMixin):
+    
+    directory = models.CharField(verbose_name=u'diretório',
+                                 max_length=1024,
+                                 blank=True,
+                                 default=u'~')
+    
     @property
     def destination_impl(self):
-        return self._getattr('localdestination',
+        return (self._getattr('localdestination',
                self._getattr('sftpdestination',
                self._getattr('apidestination',
-               None)))
+               None))))
     
     def backup(self, *args, **kwargs):
         return self.destination_impl.backup(*args,**kwargs)
@@ -26,5 +32,5 @@ class Destination(NameableMixin, LoggableMixin):
             return otherwise
     
     class Meta:
+        verbose_name = 'destino'
         app_label = 'server'
-        

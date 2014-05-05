@@ -1,16 +1,12 @@
 #-*- coding: utf-8 -*-
 
-import os
-
 from django.db import models
 
-from .Destination import Destination
+import os
 
-class LocalDestination(Destination):
-    directory = models.CharField(verbose_name=u'diretório',
-                                 max_length=1024,
-                                 blank=True,
-                                 default=u'~')
+from .BaseDestination import BaseDestination
+
+class LocalDestination(BaseDestination):
     
     def backup(self, contents, subdir, filename, *args, **kwargs):
         print "Hello! This is %s's backup method" % self.__class__.__name__

@@ -5,8 +5,9 @@ from datetime import datetime
 from django.db import models
 from django.conf import settings
 
+
 from .Origin import Origin
-from .Destination import Destination
+from .destination.BaseDestination import BaseDestination
 
 from .mixins import (
     NameableMixin,
@@ -15,7 +16,7 @@ from .mixins import (
 
 class Backup(NameableMixin, LoggableMixin):
     origin         = models.ForeignKey(Origin)
-    destination    = models.ForeignKey(Destination)
+    destination    = models.ForeignKey(BaseDestination)
     date           = models.DateTimeField(verbose_name=u'data do backup')
     success        = models.BooleanField(default=False)    
     obs            = models.TextField(null=True,
