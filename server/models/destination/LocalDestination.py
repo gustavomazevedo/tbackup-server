@@ -10,10 +10,13 @@ class LocalDestination(BaseDestination):
     
     def backup(self, contents, subdir, filename, *args, **kwargs):
         print "Hello! This is %s's backup method" % self.__class__.__name__
-        fd = os.path.join(self.directory, subdir)
+        fd = os.path.join(os.path.expanduser(self.directory), subdir)
         if not os.path.exists(fd):
+            print os.path.exists(fd)
+            print 'criando caminho'
             os.makedirs(fd)
         fn = os.path.join(fd,filename)
+        print fn
         try:
             with open(fn, 'wb+') as f:
                 for data in iter(lambda: contents.read(64 * 1024), ''):

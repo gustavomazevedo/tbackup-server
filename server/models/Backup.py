@@ -36,11 +36,13 @@ class Backup(NameableMixin, LoggableMixin):
     
     class Meta:
         app_label = 'server'
+        #unique_together = ('name', 'origin', 'destination', 'date')
     
     
     def backup(self, contents, before_restore=False, after_restore=False):
         #shortcut
         #if after_backup, just send obs message
+        print after_restore
         if after_restore:
             self.after_restore = True
             self.obs = u'Restauro da data %s bem sucedido!' % (

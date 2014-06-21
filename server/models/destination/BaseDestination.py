@@ -16,9 +16,9 @@ class BaseDestination(NameableMixin, LoggableMixin):
     @property
     def destination_impl(self):
         return (self._getattr('localdestination',
-               self._getattr('sftpdestination',
-               self._getattr('apidestination',
-               None))))
+                self._getattr('sftpdestination',
+                self._getattr('apidestination',
+                None))))
     
     def backup(self, *args, **kwargs):
         return self.destination_impl.backup(*args,**kwargs)
