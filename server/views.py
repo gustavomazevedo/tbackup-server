@@ -18,6 +18,29 @@ from .models import Backup, Origin
 from .models.destination.BaseDestination import BaseDestination
 
 
+
+@require_GET
+def origin_available(request):
+    if not authenticated(None, request.GET.dict()):
+        return HttpResponseForbidden()
+    oname = request.GET.get(u"origin", None)
+    print oname
+    if not oname:
+        return HttpResponseBadRequest(u"<h1>valor inválido</h1>")
+    
+    respond = lambda available: \
+                json_response(
+                    get_signed_data({u"availability":available},
+                    settings.R_SIGNATURE_KEY)
+                )
+    
+    origin = Origin.objects.filter(name=oname)
+    print origin
+    #print respond(False)
+    #print respond(True)
+    print respond(False) if origin else respond(True)
+    return respond(False) if origin else respond(True)
+    
 #@require_POST
 @csrf_exempt
 def register_origin(request):
@@ -53,9 +76,14 @@ def register_origin(request):
 @require_GET
 def retrieve_destinations(request, id):
     #if request.method == 'GET':
-        if not id or not authenticated(id, request.GET.dict()):
-            return HttpResponseForbidden()
         
+        if not id:
+            import ipdb; ipdb.set_trace()
+            return HttpResponseForbidden()
+        elif not authenticated(id, request.GET.dict()):
+            import ipdb; ipdb.set_trace()
+            return HttpResponseForbidden()
+
         return json_response(
             get_signed_data(
                 {u"destinations": [d.name for d in BaseDestination.objects.all()]},
@@ -69,6 +97,15 @@ def authenticated(id, fulldata):
     signature = fulldata.get(u"signature", None)
     data = remove_key(fulldata, u"signature")
     #import ipdb; ipdb.set_trace()
+    
+    origin = Origin.objects.filter(id=id)
+    if origin:
+        import ipdb; ipdb.set_trace()
+        print id
+        print signature
+        print origin[0]
+        print origin[0].apikey
+    
     if not signature:
         return False
     try:
@@ -88,7 +125,7 @@ def sign(data, key):
             sha1.update(unicode(item))
     sha1.update(key)
     
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     return sha1.hexdigest()
 
 def get_signed_data(data, key):
