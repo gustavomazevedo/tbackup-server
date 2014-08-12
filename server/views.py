@@ -55,10 +55,12 @@ def retrieve_destinations(request, id):
     #if request.method == 'GET':
         
     if not id:
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
+        print 'not id'
         return HttpResponseForbidden()
     elif not authenticated(id, request.GET.dict()):
-        import ipdb; ipdb.set_trace()
+        print 'not authenticated'
+        #import ipdb; ipdb.set_trace()
         return HttpResponseForbidden()
     
     return json_response( {u"destinations": [d.name for d in
@@ -73,6 +75,7 @@ def authenticated(id, fulldata):
     data = remove_key(fulldata, u"signature")
     origin = Origin.objects.filter(id=id)
     apikey = origin[0].apikey if origin.exists() else None
+    #import ipdb; ipdb.set_trace()
     return False if not signature else signature == sign(data, apikey)
     
 def sign(data, apikey=None):
@@ -85,13 +88,14 @@ def sign(data, apikey=None):
             sha1.update(unicode(item))
     used_key = apikey or settings.R_SIGNATURE_KEY
     sha1.update(used_key)
-    
+    #import ipdb; ipdb.set_trace()
     return sha1.hexdigest()
 
 def get_signed_data(data, apikey):
     return_data = dict(data) if data else {}
     return_data[u"timestamp"] = u"%s" % json.dumps(unicode(datetime.now()))
     return_data[u"signature"] = u"%s" % sign(return_data, apikey)
+    #import ipdb; ipdb.set_trace()
     return return_data
 
 def remove_key(d, key):
