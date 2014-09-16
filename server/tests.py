@@ -15,7 +15,7 @@ from django.core.files import File
 
 import os
 
-PATH='/Users/gustavo/'
+PATH=os.path.join(settings.BASE_DIR, 'examples')
 #PATH='/home/gustavo.azevedo/Projects/'
 
 # Create your tests here.
@@ -30,12 +30,12 @@ class DestinationCase(TestCase):
         
         ld1 = LocalDestination.objects.create(
             name = 'HD1',
-            directory = os.path.join(PATH, 'tbackup-server', 'tests-1')
+            directory = os.path.join(PATH, 'destination1')
         )
         
         ld2 = LocalDestination.objects.create(
             name = 'HD2',
-            directory = os.path.join(PATH, 'tbackup-server', 'tests')
+            directory = os.path.join(PATH, 'destination2')
         )
         
         sftp1 = SFTPDestination.objects.create(
@@ -70,13 +70,15 @@ class DestinationCase(TestCase):
             date = dt
         )
         
+        self.fn = os.path.join(PATH, 'reactive_course source code_reactive-week1.zip')
+        
     def test_localbackup(self):
         
         b = Backup.objects.get(origin__pk=1,
                                destination__name='HD2')
         
-        fn2 = os.path.join(PATH, 'virtualenv-1.11.4.tar.gz')
-        contents = File(fn2).open('rb')
+        #contents = File(self.fn).open('rb')
+        contents = File(open(self.fn, 'rb'))
         b.backup(contents)
         
         self.assertTrue(b.success)
@@ -115,8 +117,7 @@ class DestinationCase(TestCase):
         b = Backup.objects.get(origin__pk=1,
                                destination__name='Odin')
         
-        fn2 = os.path.join(PATH, 'virtualenv-1.11.4.tar.gz')
-        contents = File(open(fn2, 'rb'))
+        contents = File(open(self.fn, 'rb'))
         b.backup(contents)
         
         self.assertTrue(b.success)

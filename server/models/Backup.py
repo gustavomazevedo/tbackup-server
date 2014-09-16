@@ -4,7 +4,7 @@ from datetime import datetime
 
 from django.db import models
 from django.conf import settings
-
+from django.utils import timezone
 
 from .Origin import Origin
 from .destination.BaseDestination import BaseDestination
@@ -71,7 +71,7 @@ class Backup(NameableMixin, LoggableMixin):
             filename = self.name
         )
         if success:
-            self.restore_dt = datetime.now()
+            self.restore_dt = timezone.now()
             self.obs = u'Tentativa de restauro na data %s' % (
                 self.restore_dt.strftime(settings.DT_FORMAT_VERBOSE))
             self.save()
