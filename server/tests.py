@@ -40,7 +40,7 @@ class DestinationCase(TestCase):
         
         sftp1 = SFTPDestination.objects.create(
             name = 'Odin',
-            hostname = '177.17.192.100',
+            hostname = '127.0.0.1',
             port = '22',
             username = 'testing'
         )
