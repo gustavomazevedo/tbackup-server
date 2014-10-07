@@ -12,7 +12,7 @@ from ..mixins     import AccessableMixin
 
 class SFTPDestination(BaseDestination, AccessableMixin):
     
-    def backup(self, contents, subdir, filename, *args, **kwargs):
+    def backup(sclienelf, contents, subdir, filename, *args, **kwargs):
         print "Hello! This is %s's backup method" % self.__class__.__name__
 
         fd = os.path.join(self.directory, subdir)
@@ -25,11 +25,17 @@ class SFTPDestination(BaseDestination, AccessableMixin):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         client.load_system_host_keys()
+        pvtkey = paramiko.RSAKey.from_private_key_file(self.key_filename)
         print (self.hostname,
                int(self.port),
                self.username,
+               pvtkey
                )
-        client.connect(hostname=self.hostname,port=int(self.port),username=self.username,timeout=5.0)
+        client.connect(hostname=self.hostname,
+                       port=int(self.port),
+                       username=self.username,
+                       pkey=pvtkey,
+                       timeout=5.0)
         try: 
             sftp = client.open_sftp()
             

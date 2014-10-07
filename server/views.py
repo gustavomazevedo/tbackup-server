@@ -18,7 +18,6 @@ from .models import Backup, Origin
 from .models.destination.BaseDestination import BaseDestination
 
 
-
 @require_GET
 def origin_available(request):
     if not authenticated(None, request.GET.dict()):
@@ -42,9 +41,9 @@ def register_origin(request):
     if not origin_name: return HttpResponseBadRequest(u"<h1>valor inválido</h1>")
     
     origin = Origin.objects.create(name=origin_name)
-    return json_response({ u"origin": origin.name
-                         ,  u"id"    : origin.id
-                         ,  u"apikey": unicode(origin.apikey)
+    return json_response({ u"origin": origin.name,
+                           u"id"    : origin.id,
+                           u"apikey": unicode(origin.apikey)
                          })
     #else:
     #    return HttpResponseNotFound(u"<h1>Não há nada aqui @_@</h1>")
@@ -63,9 +62,8 @@ def retrieve_destinations(request, id):
         #import ipdb; ipdb.set_trace()
         return HttpResponseForbidden()
     
-    return json_response( {u"destinations": [d.name for d in
-                                               BaseDestination.objects.all()]}
-                        , Origin.objects.get(id=id).apikey )
+    return json_response( {u"destinations": [d.name for d in BaseDestination.objects.all()]},
+                          Origin.objects.get(id=id).apikey )
 
     #else:
     #    return HttpResponseNotFound()

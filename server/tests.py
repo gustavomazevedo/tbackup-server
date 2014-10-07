@@ -8,7 +8,7 @@ from .models import (
     Backup
 )
 from datetime import datetime
-from django.utils.timezone import utc
+from django.utils import timezone
 from django.conf import settings
 
 from django.core.files import File
@@ -39,10 +39,11 @@ class DestinationCase(TestCase):
         )
         
         sftp1 = SFTPDestination.objects.create(
-            name = 'Odin',
-            hostname = '127.0.0.1',
+            name = 'TinyCore',
+            hostname = '192.168.56.102',
             port = '22',
-            username = 'testing'
+            username = 'gustavo',
+            key_filename = os.path.expanduser('~/.ssh/testkey_rsa')
         )
         
         api1 = APIDestination.objects.create(
@@ -53,7 +54,7 @@ class DestinationCase(TestCase):
             get_uri  = r'/object/'
         )
         
-        dt = datetime.utcnow().replace(tzinfo=utc)
+        dt = timezone.now()
         fn = 'backup_%s.tar.gz' % dt.strftime(settings.DT_FORMAT)
         
         Backup.objects.create(
@@ -115,7 +116,7 @@ class DestinationCase(TestCase):
         
     def test_sftpbackup(self):
         b = Backup.objects.get(origin__pk=1,
-                               destination__name='Odin')
+                               destination__name='TinyCore')
         
         contents = File(open(self.fn, 'rb'))
         b.backup(contents)
