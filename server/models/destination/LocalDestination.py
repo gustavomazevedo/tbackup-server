@@ -28,7 +28,7 @@ class LocalDestination(BaseDestination):
         
     def restore(self, subdir, filename, *args, **kwargs):
         print "Hello! This is %s's restore method" % self.__class__.__name__
-        fn = os.path.join(self.directory,
+        fn = os.path.join(os.path.expanduser(self.directory),
                           subdir,
                           filename)
         try:
