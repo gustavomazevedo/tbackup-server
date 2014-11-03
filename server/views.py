@@ -51,8 +51,15 @@ def register_origin(request):
 
 @require_GET
 def retrieve_destinations(request, id):
-    #if request.method == 'GET':
-        
+    return return_or_error(request, id, lambda: json_response(
+        {u"destinations": [d.name for d in BaseDestination.objects.all()]},
+        Origin.objects.get(id=id).apikey ))
+
+def return_or_error(request, id, action):
+    error = get_authentication_error(request, id)    
+    return (error if error is not None else action())
+
+def get_authentication_error(request, id):
     if not id:
         #import ipdb; ipdb.set_trace()
         print 'not id'
@@ -61,12 +68,7 @@ def retrieve_destinations(request, id):
         print 'not authenticated'
         #import ipdb; ipdb.set_trace()
         return HttpResponseForbidden()
-    
-    return json_response( {u"destinations": [d.name for d in BaseDestination.objects.all()]},
-                          Origin.objects.get(id=id).apikey )
-
-    #else:
-    #    return HttpResponseNotFound()
+    return None
 
 def authenticated(id, fulldata):
     signature = fulldata.get(u"signature", None)
@@ -104,12 +106,9 @@ def remove_key(d, key):
 @require_POST
 @csrf_exempt
 def backup(request, id):
-    #if request.method == 'POST':
-    #return json_response([request.POST, request.FILES])
-    #values = request.POST.get('values', None)
-    #if not values:
-    #    print u'<h1>valor inválido</h1>'
-    #    return HttpResponseBadRequest(u'<h1>valor inválido</h1>')
+    error = get_authentication_error(request, id)
+    if error is not None:
+        return error
     
     django_file = request.FILES.get('file', None)
     if not django_file:
@@ -124,22 +123,22 @@ def backup(request, id):
     return json_response(
         backup_file(
             django_file,
-            request.POST.get('origin', None),#values['origin'],
-            request.POST.get('destination', None),#values['destination'],
-            request.POST.get('date', None), #values['date'],
-            request.POST.get('sha1sum', None),#None, #values['sha1sum'],
-            to_bool(request.POST.get('before_restore', None)),#values['before_restore'],
-            to_bool(request.POST.get('after_restore', None)),#values['after_restore'],
+            request.POST.get('origin', None),
+            request.POST.get('destination', None),
+            request.POST.get('date', None),
+            request.POST.get('sha1sum', None),
+            to_bool(request.POST.get('before_restore', None)),
+            to_bool(request.POST.get('after_restore', None)),
         )
     )
-    #else:
-    #    print u'<h1>não há nada aqui @_@</h1>'
-    #    return HttpResponseNotFound(u'<h1>não há nada aqui @_@</h1>')
-
+    
 #@require_POST
 @csrf_exempt
 def restore(request, id):
+    
+    
     return HttpResponseNotFound(u'<h1>não implementado</h1>')
+    
     #if request.method == 'GET':
     #    return HttpResponse(
     #        json.dumps(
@@ -170,12 +169,10 @@ def backup_file(django_file, from_origin, to_destination,
                 date, sha1sum, before_restore, after_restore):
     o = Origin.objects.get(name=from_origin)
     d = BaseDestination.objects.get(name=to_destination)
-    b = Backup.objects.create(
-        name=django_file.name,
-        origin=o,
-        destination=d,
-        date=date,
-    )
+    b = Backup.objects.create(name=django_file.name,
+                              origin=o,
+                              destination=d,
+                              date=date)
     try:
         r = b.backup(django_file, before_restore, after_restore)
         if r:
