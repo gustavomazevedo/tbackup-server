@@ -2,6 +2,8 @@
 import json
 import operator
 
+import StringIO
+
 from datetime import datetime
 
 from Crypto.Hash import SHA
@@ -57,7 +59,7 @@ def retrieve_destinations(request, id):
 
 def return_or_error(request, id, action):
     error = get_authentication_error(request, id)    
-    return (error if error is not None else action())
+    return error if error else action()
 
 def get_authentication_error(request, id):
     if not id:
@@ -107,7 +109,7 @@ def remove_key(d, key):
 @csrf_exempt
 def backup(request, id):
     error = get_authentication_error(request, id)
-    if error is not None:
+    if error:
         return error
     
     django_file = request.FILES.get('file', None)
@@ -135,10 +137,31 @@ def backup(request, id):
 #@require_POST
 @csrf_exempt
 def restore(request, id):
+    error = get_authentication_error(request, id)
+    if error:
+        return error
     
+    o = Origin.objects.get(name=request.POST.get('origin', None))
+    d = BaseDestination.objects.get(name=request.POST.get('destination', None))
+    filename = request.POST.get('filename', None)
+    b = Backup.objects.get(name=filename,
+                              origin=o,
+                              destination=d,
+                              date=request.POST.get('date', None))
+    f = StringIO.StringIO()
+    chunks, success = b.restore()
+    if success:
+        for chunk in chunks:
+            f.write(chunk)
     
-    return HttpResponseNotFound(u'<h1>não implementado</h1>')
+    response = HttpResponse(FileWrapper(f.getvalue()), content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename=' + filename
+    response['Content-Length'] = f.tell()
     
+    return response
+    
+    #return HttpResponseNotFound(u'<h1>não implementado</h1>')
+
     #if request.method == 'GET':
     #    return HttpResponse(
     #        json.dumps(
