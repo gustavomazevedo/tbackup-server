@@ -148,6 +148,13 @@ def restore(request, id):
                               origin=o,
                               destination=d,
                               date=request.POST.get('date', None))
+    o = Origin.objects.get(name=request.GET.get('origin', None))
+    d = BaseDestination.objects.get(name=request.GET.get('destination', None))
+    filename = request.GET.get('filename', None)
+    b = Backup.objects.get(name=filename,
+                              origin=o,
+                              destination=d,
+                              date=request.GET.get('date', None))
     f = StringIO.StringIO()
     chunks, success = b.restore()
     if success:
