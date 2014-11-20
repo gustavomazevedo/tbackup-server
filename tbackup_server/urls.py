@@ -5,11 +5,14 @@ from django.contrib import admin
 admin.autodiscover()
 
 from rest_framework import routers
-from server.views import UserSerializer, UserViewSet
+from server.views import UserViewSet, DestinationViewSet, BackupViewSet
 
 # Routers provide a way of automatically determining the URL conf.
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
+router.register(r'destinations', DestinationViewSet)
+router.register(r'backups', BackupViewSet)
+#router.register(r'rrules', RRuleViewSet)
 
 from rest_framework.authtoken.views import obtain_auth_token
 

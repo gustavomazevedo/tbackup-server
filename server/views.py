@@ -216,17 +216,34 @@ def backup_file(django_file, from_origin, to_destination,
         
 
 from django.contrib.auth.models import User
-from rest_framework import serializers, viewsets
-
-
-# Serializers define the API representation.
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = User
-        fields = ('id', 'url', 'username', 'email', 'is_staff')
+from rest_framework import viewsets, views
+from rest_framework.response import Response
+from .serializers import UserSerializer, DestinationSerializer, BackupSerializer
 
 # ViewSets define the view behavior.
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     
+class DestinationViewSet(viewsets.ModelViewSet):
+    queryset = BaseDestination.objects.all()
+    serializer_class = DestinationSerializer
+
+class BackupViewSet(viewsets.ModelViewSet):
+    queryset = Backup.objects.all()
+    serializer_class = BackupSerializer
+    
+#
+#class UserAvailableView(generics.ListAPIView):
+#    serializer_class = UserSerializer
+#    
+#    def get_queryset(self, request, *args, **kwargs):
+#        username = request.DATA.get('username', None)
+#        
+#        if username:
+#            queryset = queryset.filter(username=username)
+#            
+#        return queryset
+#    
+#    def get(self, request, *args, **kwargs):
+#        return Response({'available': })

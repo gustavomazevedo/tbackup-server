@@ -37,7 +37,6 @@ class LocalDestination(BaseDestination):
             print e
             return None, False
     
-    
     class Meta:
         verbose_name = u'destino local'
         verbose_name_plural = u'destinos locais'
