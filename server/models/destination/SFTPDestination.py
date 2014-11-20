@@ -54,7 +54,7 @@ class SFTPDestination(BaseDestination, AccessableMixin):
             raise
 
     
-    def restore(self, contents, subdir, filename, *args, **kwargs):
+    def restore(self, subdir, filename, *args, **kwargs):
         print "Hello! This is %s's restore method" % self.__class__.__name__
         
         client = self.connect()

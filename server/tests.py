@@ -110,7 +110,7 @@ class DestinationCase(TestCase):
         
         if not data is None:
             print 'success'
-            print data
+            print len(data)
         else:
             print 'fail'
         
@@ -137,3 +137,15 @@ class DestinationCase(TestCase):
                b.after_restore,
                b.restore_dt,
                b.related_to)
+
+    def test_sftprestore(self):
+        b = Backup.objects.get(origin__pk=1,
+                               destination__name='TinyCore')
+        data = b.restore()
+        self.assertIsNotNone(data)
+        
+        if not data is None:
+            print 'success'
+            print data
+        else:
+            print 'fail'
