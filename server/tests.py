@@ -1,4 +1,16 @@
+from datetime import datetime
+from django.utils import timezone
+from django.conf import settings
 from django.test import TestCase
+from django.core.files import File
+from django.contrib.auth.models import User
+
+import os
+import subprocess
+import time
+import paramiko
+import mock
+
 from .models import (
     Origin,
     BaseDestination,
@@ -7,21 +19,9 @@ from .models import (
     APIDestination,
     Backup
 )
-from datetime import datetime
-from django.utils import timezone
-from django.conf import settings
-
-from django.core.files import File
-
-import os
 
 PATH=os.path.join(settings.BASE_DIR, 'examples')
-#PATH='/home/gustavo.azevedo/Projects/'
 
-import subprocess
-import time
-import paramiko
-import mock
 def mock_sftp_connect(self):
     pkey = paramiko.RSAKey.from_private_key_file('test_rsa.key')
     transport = paramiko.Transport(('localhost', 3373))
@@ -39,6 +39,11 @@ class DestinationCase(TestCase):
         o = Origin.objects.create(
             name = 'Guadalupe',
             plan = 'blablablablabla'
+        )
+        
+        self.user = User.objects.create(
+            username='Guadalupe',
+            email='g@g.com'
         )
         
         ld1 = LocalDestination.objects.create(
@@ -71,14 +76,16 @@ class DestinationCase(TestCase):
         fn = 'backup_%s.tar.gz' % dt.strftime(settings.DT_FORMAT)
         
         Backup.objects.create(
-            origin = o,
+            user = self.user,
+            #origin = o,
             name = fn,
             destination = ld2.basedestination_ptr,
             date = dt
         )
         
         Backup.objects.create(
-            origin = o,
+            user = self.user,
+            #origin = o,
             name = fn,
             destination = sftp1.basedestination_ptr,
             date = dt
@@ -88,7 +95,9 @@ class DestinationCase(TestCase):
         
     def test_localbackup(self):
         
-        b = Backup.objects.get(origin__pk=1,
+        #b = Backup.objects.get(origin__pk=1,
+        #                       destination__name='HD2')
+        b = Backup.objects.get(user__pk=self.user.id,
                                destination__name='HD2')
         
         #contents = File(self.fn).open('rb')
@@ -113,13 +122,16 @@ class DestinationCase(TestCase):
         #       b.related_to)
         
     def test_localrestore(self):
-        b = Backup.objects.get(origin__pk=1,
+        #b = Backup.objects.get(origin__pk=1,
+        #                       destination__name='HD2')
+        b = Backup.objects.get(user__pk=self.user.id,
                                destination__name='HD2')
         #print b.__dict__
         
         data = b.restore()
         
         self.assertIsNotNone(data)
+        self.assertEquals(''.join(data), open(self.fn, 'rb').read())
         
         #if not data is None:
         #    print 'success'
@@ -134,7 +146,9 @@ class DestinationCase(TestCase):
         time.sleep(0.3)
         b = None
         with mock.patch.object(SFTPDestination, 'connect', return_value=mock_sftp_connect(None)) as mocked_func:
-            b = Backup.objects.get(origin__pk=1,
+            #b = Backup.objects.get(origin__pk=1,
+            #                       destination__name='TestSFTPDestination')
+            b = Backup.objects.get(user__pk=self.user.id,
                                    destination__name='TestSFTPDestination')
             
             contents = File(open(self.fn, 'rb'))
@@ -148,16 +162,6 @@ class DestinationCase(TestCase):
         self.assertIsNone(b.restore_dt)
         self.assertIsNone(b.related_to)
         
-        #print (b,
-        #       b.name,
-        #       b.origin,
-        #       b.destination,
-        #       b.date,
-        #       b.success,
-        #       b.before_restore,
-        #       b.after_restore,
-        #       b.restore_dt,
-        #       b.related_to)
             
         
         
@@ -167,20 +171,16 @@ class DestinationCase(TestCase):
         
         data = None
         with mock.patch.object(SFTPDestination, 'connect', return_value=mock_sftp_connect(None)) as mocked_func:
-            b = Backup.objects.get(origin__pk=1,
+            #b = Backup.objects.get(origin__pk=1,
+            #                   destination__name='TestSFTPDestination')
+            b = Backup.objects.get(user__pk=self.user.id,
                                destination__name='TestSFTPDestination')
             data = b.restore()
-            
-        #if not data is None:
-        #    print 'success'
-        #    #print data
-        #else:
-        #    print 'fail'
         
         proc.kill()
         
         self.assertIsNotNone(data)
-            
+        self.assertEquals(''.join(data), open(self.fn, 'rb').read())
             
                 
         

@@ -5,6 +5,7 @@ from datetime import datetime
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 from .Origin import Origin
 from .destination.BaseDestination import BaseDestination
@@ -15,11 +16,12 @@ from .mixins import (
 )
 
 class Backup(NameableMixin, LoggableMixin):
-    origin         = models.ForeignKey(Origin)
-    destination    = models.ForeignKey(BaseDestination)
-    date           = models.DateTimeField(verbose_name=u'data do backup')
-    success        = models.BooleanField(default=False)    
-    obs            = models.TextField(null=True,
+    #origin     = models.ForeignKey(Origin)
+    user        = models.ForeignKey(User)
+    destination = models.ForeignKey(BaseDestination)
+    date        = models.DateTimeField(verbose_name=u'data do backup')
+    success     = models.BooleanField(default=False)    
+    obs         = models.TextField(null=True,
                                    blank=True)
     '''Restore data and consequences:
             (date,
@@ -52,7 +54,8 @@ class Backup(NameableMixin, LoggableMixin):
             return True
         
         success = self.destination.backup(
-            subdir = self.origin.name,
+            #subdir = self.origin.name,
+            subdir = self.user.username,
             filename = self.name,
             contents = contents
         )
@@ -67,7 +70,8 @@ class Backup(NameableMixin, LoggableMixin):
     
     def restore(self):
         contents, success = self.destination.restore(
-            subdir = self.origin.name,
+            #subdir = self.origin.name,
+            subdir = self.user.username,
             filename = self.name
         )
         if success:
