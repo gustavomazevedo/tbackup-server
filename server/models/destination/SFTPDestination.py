@@ -26,7 +26,7 @@ class SFTPDestination(BaseDestination, AccessableMixin):
         return client.open_sftp()
     
     def backup(self, contents, subdir, filename, *args, **kwargs):
-        print "Hello! This is %s's backup method" % self.__class__.__name__
+        #print "Hello! This is %s's backup method" % self.__class__.__name__
 
         fd = os.path.join(self.directory, subdir)
 
@@ -54,7 +54,7 @@ class SFTPDestination(BaseDestination, AccessableMixin):
 
     
     def restore(self, subdir, filename, *args, **kwargs):
-        print "Hello! This is %s's restore method" % self.__class__.__name__
+        #print "Hello! This is %s's restore method" % self.__class__.__name__
         
         try:
             sftp = self.connect()

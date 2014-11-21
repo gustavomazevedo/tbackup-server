@@ -9,11 +9,11 @@ from .BaseDestination import BaseDestination
 class LocalDestination(BaseDestination):
     
     def backup(self, contents, subdir, filename, *args, **kwargs):
-        print "Hello! This is %s's backup method" % self.__class__.__name__
+        #print "Hello! This is %s's backup method" % self.__class__.__name__
         fd = os.path.join(os.path.expanduser(self.directory), subdir)
         if not os.path.exists(fd):
             os.makedirs(fd)
-            print 'caminho ' + fd + ' criado'
+            #print 'caminho ' + fd + ' criado'
             
         fn = os.path.join(fd,filename)
         try:
@@ -26,7 +26,7 @@ class LocalDestination(BaseDestination):
         return True
         
     def restore(self, subdir, filename, *args, **kwargs):
-        print "Hello! This is %s's restore method" % self.__class__.__name__
+        #print "Hello! This is %s's restore method" % self.__class__.__name__
         fn = os.path.join(os.path.expanduser(self.directory),
                           subdir,
                           filename)

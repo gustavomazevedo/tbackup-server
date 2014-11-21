@@ -28,6 +28,9 @@ def mock_sftp_connect(self):
     transport.connect(username='admin', password='admin', pkey=pkey)
     return paramiko.SFTPClient.from_transport(transport)
 
+def create_sftp_server():
+    return subprocess.Popen(['sftpserver', '-k', 'test_rsa.key', '-l', 'WARNING'])
+    
 # Create your tests here.
 
 class DestinationCase(TestCase):
@@ -98,65 +101,68 @@ class DestinationCase(TestCase):
         self.assertIsNone(b.restore_dt)
         self.assertIsNone(b.related_to)
         
-        print (b,
-               b.name,
-               b.origin,
-               b.destination,
-               b.date,
-               b.success,
-               b.before_restore,
-               b.after_restore,
-               b.restore_dt,
-               b.related_to)
+        #print (b,
+        #       b.name,
+        #       b.origin,
+        #       b.destination,
+        #       b.date,
+        #       b.success,
+        #       b.before_restore,
+        #       b.after_restore,
+        #       b.restore_dt,
+        #       b.related_to)
         
     def test_localrestore(self):
         b = Backup.objects.get(origin__pk=1,
                                destination__name='HD2')
-        print b.__dict__
+        #print b.__dict__
         
         data = b.restore()
         
         self.assertIsNotNone(data)
         
-        if not data is None:
-            print 'success'
-            print len(data)
-        else:
-            print 'fail'
+        #if not data is None:
+        #    print 'success'
+        #    print len(data)
+        #else:
+        #    print 'fail'
     
     #@mock.patch.object(SFTPDestination, 'connect', side_effect='mock_sftp_connect')    
     def test_sftpbackup(self):
-        proc = subprocess.Popen(['sftpserver', '-k', 'test_rsa.key'])
+        proc = create_sftp_server()
         
         time.sleep(0.3)
+        b = None
         with mock.patch.object(SFTPDestination, 'connect', return_value=mock_sftp_connect(None)) as mocked_func:
             b = Backup.objects.get(origin__pk=1,
                                    destination__name='TestSFTPDestination')
             
             contents = File(open(self.fn, 'rb'))
             b.backup(contents)
+        
+        proc.kill()
+        
+        self.assertTrue(b.success)
+        self.assertFalse(b.before_restore)
+        self.assertFalse(b.after_restore)
+        self.assertIsNone(b.restore_dt)
+        self.assertIsNone(b.related_to)
+        
+        #print (b,
+        #       b.name,
+        #       b.origin,
+        #       b.destination,
+        #       b.date,
+        #       b.success,
+        #       b.before_restore,
+        #       b.after_restore,
+        #       b.restore_dt,
+        #       b.related_to)
             
-            self.assertTrue(b.success)
-            self.assertFalse(b.before_restore)
-            self.assertFalse(b.after_restore)
-            self.assertIsNone(b.restore_dt)
-            self.assertIsNone(b.related_to)
-            
-            print (b,
-                   b.name,
-                   b.origin,
-                   b.destination,
-                   b.date,
-                   b.success,
-                   b.before_restore,
-                   b.after_restore,
-                   b.restore_dt,
-                   b.related_to)
-            
-        proc.terminate()    
+        
         
     def test_sftprestore(self):
-        proc = subprocess.Popen(['sftpserver', '-k', 'test_rsa.key'])
+        proc = create_sftp_server()
         time.sleep(0.3)
         
         data = None
@@ -164,12 +170,17 @@ class DestinationCase(TestCase):
             b = Backup.objects.get(origin__pk=1,
                                destination__name='TestSFTPDestination')
             data = b.restore()
-            self.assertIsNotNone(data)
             
-            if not data is None:
-                print 'success'
-                print data
-            else:
-                print 'fail'
+        #if not data is None:
+        #    print 'success'
+        #    #print data
+        #else:
+        #    print 'fail'
+        
+        proc.kill()
+        
+        self.assertIsNotNone(data)
+            
+            
                 
-        proc.terminate()
+        
