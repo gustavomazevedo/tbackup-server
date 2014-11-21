@@ -22,14 +22,10 @@ import subprocess
 import time
 import paramiko
 import mock
-PKEY_FILE = 'test_rsa.key'
-USERNAME = 'admin'
-PASSWORD = 'admin'
-HOSTNAME, PORT = 'localhost', 3373
 def mock_sftp_connect(self):
-    pkey = paramiko.RSAKey.from_private_key_file(PKEY_FILE)
-    transport = paramiko.Transport((HOSTNAME, PORT))
-    transport.connect(username=USERNAME, password=PASSWORD, pkey=pkey)
+    pkey = paramiko.RSAKey.from_private_key_file('test_rsa.key')
+    transport = paramiko.Transport(('localhost', 3373))
+    transport.connect(username='admin', password='admin', pkey=pkey)
     return paramiko.SFTPClient.from_transport(transport)
 
 # Create your tests here.
