@@ -1,15 +1,19 @@
-from datetime import datetime
+
 from django.utils import timezone
 from django.conf import settings
 from django.test import TestCase
 from django.core.files import File
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AnonymousUser
+
+from rest_framework.test import APITestCase
+from rest_framework import status
 
 import os
 import subprocess
 import time
 import paramiko
 import mock
+from datetime import datetime
 
 from .models import (
     Origin,
@@ -19,6 +23,13 @@ from .models import (
     APIDestination,
     Backup
 )
+
+from .views import (
+    UserViewSet,
+    DestinationViewSet,
+    BackupViewSet
+)
+
 
 PATH=os.path.join(settings.BASE_DIR, 'examples')
 
@@ -181,6 +192,62 @@ class DestinationCase(TestCase):
         
         self.assertIsNotNone(data)
         self.assertEquals(''.join(data), open(self.fn, 'rb').read())
-            
-                
+
+class APILoginTestCase(APITestCase):
+    def setUp(self):
+        users = [
+            { 'username': 'admin', 'email': 'a@a.com', 'is_superuser': True },
+            { 'username': 'default', 'email': 'd@d.com', 'is_superuser': False }
+        ]
+        for u_info in users:
+            user = User.objects.create(username=u_info['username'], email=u_info['email'], is_superuser=u_info['is_superuser'])
+            user.set_password(u_info['username'])
+            user.save()
+    
+    def test_api_authenticate_username_password(self):
+        user = User.objects.get(username='admin')
+        logged_in = self.client.login(username=user.username, password=user.username)
+        self.client.logout()
+        
+        self.assertTrue(logged_in)
+    
+    def test_api_authenticate_token(self):
+        user = User.objects.get(username='admin')
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + user.auth_token.key)
+        response = self.client.get('/users/', format='json')
+        self.client.logout()
+        
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertNotIn('error', response.data)
+    
+    
+    
+class APIAdminTestCase(APITestCase):
+    
+    def setUp(self):
+        users = [
+            { 'username': 'admin', 'email': 'a@a.com', 'is_superuser': True },
+            { 'username': 'default', 'email': 'd@d.com', 'is_superuser': False }
+        ]
+        for u_info in users:
+            user = User.objects.create(username=u_info['username'], email=u_info['email'], is_superuser=u_info['is_superuser'])
+            user.set_password(u_info['username'])
+            user.save()
+        user = User.objects.get(username='admin')
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + user.auth_token.key)
+    
+    def tearDown(self):
+        self.client.logout()
+    
+    def test_api_get_users_auth_admin(self):
+        response = self.client.get('/users/', format='json')
+        
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertNotIn('error', response.data)
+    
+    def test_api_get_user_auth_admin(self, ):
+        response = self.client.get('/users/2/', format='json')
+        
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertNotIn('error', response.data)
         

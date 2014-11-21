@@ -218,7 +218,7 @@ def backup_file(django_file, from_origin, to_destination,
 from django.contrib.auth.models import User, AnonymousUser
 from django.core.exceptions import FieldError
 from rest_framework import viewsets, views, status, permissions
-from rest_framework.authentication import BasicAuthentication, TokenAuthentication
+from rest_framework.authentication import BasicAuthentication, SessionAuthentication, TokenAuthentication
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from .serializers import UserSerializer, DestinationSerializer, BackupSerializer
