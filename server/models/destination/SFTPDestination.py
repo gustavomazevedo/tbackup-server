@@ -23,20 +23,19 @@ class SFTPDestination(BaseDestination, AccessableMixin):
                        username=self.username,
                        pkey=pvtkey,
                        timeout=5.0)
-        return client
+        return client.open_sftp()
     
     def backup(self, contents, subdir, filename, *args, **kwargs):
         print "Hello! This is %s's backup method" % self.__class__.__name__
 
         fd = os.path.join(self.directory, subdir)
-        client = self.connect()
-        
-        try: 
-            sftp = client.open_sftp()
-            
+
+        try:
+            sftp = self.connect()
             if not self._rexists(sftp,subdir):
                 sftp.mkdir(subdir)
                 logging.warning('caminho criado')
+            
             
             sftp.chdir(subdir)
             try:
@@ -47,28 +46,29 @@ class SFTPDestination(BaseDestination, AccessableMixin):
                 print e
                 logging.error(e, errno)
                 raise
+            sftp.close()
             return True
         except:
             sftp.close()
-            client.close()
             raise
 
     
     def restore(self, subdir, filename, *args, **kwargs):
         print "Hello! This is %s's restore method" % self.__class__.__name__
         
-        client = self.connect()
-
         try:
-            sftp = client.open_sftp()
+            sftp = self.connect()
             sftp.chdir(subdir)
                 
             with sftp.open(filename, 'rb') as f:
-                return ([chunks for chunks in iter(lambda: f.read(64 * 1024), '')], True)
+                data = [chunks for chunks in iter(lambda: f.read(64 * 1024), '')]
+                sftp.close()
+                return (data, True)
         except Exception, e:
             print e
             logging.error(e, errno)
-            return None, False
+            sftp.close()
+            return (None, False)
     
     def _rexists(self, sftp, path):
         """

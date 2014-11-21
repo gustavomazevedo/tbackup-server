@@ -18,6 +18,20 @@ import os
 PATH=os.path.join(settings.BASE_DIR, 'examples')
 #PATH='/home/gustavo.azevedo/Projects/'
 
+import subprocess
+import time
+import paramiko
+import mock
+PKEY_FILE = 'test_rsa.key'
+USERNAME = 'admin'
+PASSWORD = 'admin'
+HOSTNAME, PORT = 'localhost', 3373
+def mock_sftp_connect(self):
+    pkey = paramiko.RSAKey.from_private_key_file(PKEY_FILE)
+    transport = paramiko.Transport((HOSTNAME, PORT))
+    transport.connect(username=USERNAME, password=PASSWORD, pkey=pkey)
+    return paramiko.SFTPClient.from_transport(transport)
+
 # Create your tests here.
 
 class DestinationCase(TestCase):
@@ -39,11 +53,11 @@ class DestinationCase(TestCase):
         )
         
         sftp1 = SFTPDestination.objects.create(
-            name = 'TinyCore',
-            hostname = '192.168.56.102',
-            port = '22',
-            username = 'gustavo',
-            key_filename = os.path.expanduser('~/.ssh/testkey_rsa')
+            name = 'TestSFTPDestination',
+            hostname = 'localhost',
+            port = '3373',
+            username = 'admin',
+            key_filename = os.path.expanduser('test_rsa.key')
         )
         
         api1 = APIDestination.objects.create(
@@ -113,39 +127,53 @@ class DestinationCase(TestCase):
             print len(data)
         else:
             print 'fail'
-        
+    
+    #@mock.patch.object(SFTPDestination, 'connect', side_effect='mock_sftp_connect')    
     def test_sftpbackup(self):
-        b = Backup.objects.get(origin__pk=1,
-                               destination__name='TinyCore')
+        proc = subprocess.Popen(['sftpserver', '-k', 'test_rsa.key'])
         
-        contents = File(open(self.fn, 'rb'))
-        b.backup(contents)
+        time.sleep(0.3)
+        with mock.patch.object(SFTPDestination, 'connect', return_value=mock_sftp_connect(None)) as mocked_func:
+            b = Backup.objects.get(origin__pk=1,
+                                   destination__name='TestSFTPDestination')
+            
+            contents = File(open(self.fn, 'rb'))
+            b.backup(contents)
+            
+            self.assertTrue(b.success)
+            self.assertFalse(b.before_restore)
+            self.assertFalse(b.after_restore)
+            self.assertIsNone(b.restore_dt)
+            self.assertIsNone(b.related_to)
+            
+            print (b,
+                   b.name,
+                   b.origin,
+                   b.destination,
+                   b.date,
+                   b.success,
+                   b.before_restore,
+                   b.after_restore,
+                   b.restore_dt,
+                   b.related_to)
+            
+        proc.terminate()    
         
-        self.assertTrue(b.success)
-        self.assertFalse(b.before_restore)
-        self.assertFalse(b.after_restore)
-        self.assertIsNone(b.restore_dt)
-        self.assertIsNone(b.related_to)
-        
-        print (b,
-               b.name,
-               b.origin,
-               b.destination,
-               b.date,
-               b.success,
-               b.before_restore,
-               b.after_restore,
-               b.restore_dt,
-               b.related_to)
-
     def test_sftprestore(self):
-        b = Backup.objects.get(origin__pk=1,
-                               destination__name='TinyCore')
-        data = b.restore()
-        self.assertIsNotNone(data)
+        proc = subprocess.Popen(['sftpserver', '-k', 'test_rsa.key'])
+        time.sleep(0.3)
         
-        if not data is None:
-            print 'success'
-            print data
-        else:
-            print 'fail'
+        data = None
+        with mock.patch.object(SFTPDestination, 'connect', return_value=mock_sftp_connect(None)) as mocked_func:
+            b = Backup.objects.get(origin__pk=1,
+                               destination__name='TestSFTPDestination')
+            data = b.restore()
+            self.assertIsNotNone(data)
+            
+            if not data is None:
+                print 'success'
+                print data
+            else:
+                print 'fail'
+                
+        proc.terminate()

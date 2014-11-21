@@ -1,5 +1,6 @@
 #-*- coding: utf-8 -*-
 from django.db import models
+from django.contrib.auth.models import User
 
 from ..mixins import (
     NameableMixin,
@@ -8,6 +9,7 @@ from ..mixins import (
 
 class BaseDestination(NameableMixin, LoggableMixin):
     
+    users     = models.ManyToManyField(User)
     directory = models.CharField(verbose_name=u'diretório',
                                  max_length=1024,
                                  blank=True,
@@ -34,32 +36,6 @@ class BaseDestination(NameableMixin, LoggableMixin):
             return getattr(self, attr, otherwise)
         except:
             return otherwise
-    
-    def get_or_create(self, *args, **kwargs):
-        print '*args'
-        print args
-        print '**kwargs'
-        print kwargs
-        
-        return super(BaseDestination, self).get_or_create(*args, **kwargs)
-        #new_attrs = dict()
-        #new_attrs['name'] = attrs['name']
-        #
-        #if instance:
-        #    if instance.type == 'LocalDestination':
-        #        new_attrs['directory'] = attrs['localdestination']['directory']
-        #        return LocalDestination(**new_attrs)
-        #    elif instance.type == 'SFTPDestination':
-        #        new_attrs['directory'] = attrs['sftpdestination']['directory']
-        #        new_attrs['hostname'] = attrs['sftpdestination']['hostname']
-        #        new_attrs['port'] = attrs['sftpdestination']['port']
-        #        new_attrs['username'] = attrs['sftpdestination']['username']
-        #        new_attrs['key_filename'] = attrs['sftpdestination']['key_filename']
-        #        return SFTPDestination(**new_attrs)
-        #
-        #new_attrs['directory'] = attrs['localdestination']['directory']
-        #return LocalDestination(**new_attrs)
-
         
     class Meta:
         verbose_name = 'destino'

@@ -215,8 +215,11 @@ def backup_file(django_file, from_origin, to_destination,
         return False
         
 
-from django.contrib.auth.models import User
-from rest_framework import viewsets, views
+from django.contrib.auth.models import User, AnonymousUser
+from django.core.exceptions import FieldError
+from rest_framework import viewsets, views, status, permissions
+from rest_framework.authentication import BasicAuthentication, TokenAuthentication
+from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from .serializers import UserSerializer, DestinationSerializer, BackupSerializer
 
@@ -224,14 +227,81 @@ from .serializers import UserSerializer, DestinationSerializer, BackupSerializer
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_class = permissions.IsAuthenticatedOrReadOnly
     
-class DestinationViewSet(viewsets.ModelViewSet):
+    def list(self, request):
+        user = request.user
+        q = request.QUERY_PARAMS
+        q_type = q.get('query_type', None)
+        
+        #if AnonymousUser or logged in user with param query_type=availability,
+        #determines if username is available
+        if isinstance(user, AnonymousUser) or (q_type is not None and q_type == 'availability'):
+            q_username = request.QUERY_PARAMS.get('username', None)
+            if q_username is None:
+                return Response({'error': 'No username specified'})
+            
+            if User.objects.filter(username=q_username).exists():
+                return Response({'available': False})
+            
+            return Response({'available': True})        
+        
+        return super(UserViewSet, self).list(request)
+    
+    @detail_route(methods=['post'])
+    def set_password(self, request, pk=None):
+        user = self.get_object()
+        serializer = PasswordSerializer(data=request.DATA)
+        if serializer.is_valid():
+            user.set_password(serializer.data['password'])
+            user.save()
+            return Response({'status': 'password set'})
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+        
+    def get_queryset(self):
+        
+        #filters by kwargs or QUERY_PARAMS
+        username = self.kwargs.get('username', self.request.QUERY_PARAMS.get('username', None))
+        if username is not None:
+            return User.objects.filter(username=username)
+        
+        #if admin, no filter applied
+        user = self.request.user
+        if user.is_superuser:
+            return User.objects.all()
+        #filter current user
+        return User.objects.filter(username=user)
+
+class PrivateModelViewSet(viewsets.ModelViewSet):
+    permission_class = permissions.IsAuthenticatedOrReadOnly
+    
+    def get_queryset(self):
+        user = self.request.user
+        if isinstance(user, AnonymousUser):
+            return []
+        elif user.is_superuser:
+            return super(PrivateModelViewSet, self).get_queryset()
+        else:
+            qs = super(PrivateModelViewSet, self).get_queryset()
+            print qs
+            try:
+                return qs.filter(user__id=user.id)
+            except FieldError:
+                try:
+                    return qs.filter(users__id=user.id)
+                except FieldError:
+                    return qs
+    
+class DestinationViewSet(PrivateModelViewSet):
     queryset = BaseDestination.objects.all()
     serializer_class = DestinationSerializer
-
-class BackupViewSet(viewsets.ModelViewSet):
+    
+class BackupViewSet(PrivateModelViewSet):
     queryset = Backup.objects.all()
     serializer_class = BackupSerializer
+    
     
 #
 #class UserAvailableView(generics.ListAPIView):
