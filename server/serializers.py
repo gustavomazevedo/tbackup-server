@@ -1,13 +1,12 @@
-
-from django.contrib.auth.models import User, AnonymousUser
 from rest_framework import serializers, fields
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 
-from server.models import Backup
-from server.models.destination.BaseDestination import BaseDestination
-from server.models.destination.LocalDestination import LocalDestination
-from server.models.destination.SFTPDestination import SFTPDestination
-
+from django.contrib.auth.models import User, AnonymousUser
+from server.models import ( Backup
+                          , BaseDestination
+                          , LocalDestination
+                          , SFTPDestination
+                          )
 
 # Serializers define the API representation.
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -22,18 +21,10 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
     def get_fields(self, *args, **kwargs):
         fields = super(UserSerializer, self).get_fields(*args, **kwargs)
         user = self.context.get('request', None).user
-        view = self.context.get('view', None)
         
         if not user.is_staff:
             fields['is_staff'].read_only = True
             
-            default = User.objects.get(username='default')
-            #hide password from other users
-            #if user != default:
-            #    fields.pop('password')
-            #don't let change 'default' password
-            #elif view and getattr(view, 'object', None) and view.object == user:
-            #    fields['password'].read_only
         return fields
     
     def restore_object(self, attrs, instance=None):
@@ -44,10 +35,6 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
                 user.email = attrs.get('email', user.email)
             except User.DoesNotExist:
                 user = User(email=attrs['email'], username=attrs['username'])
-                #add all destinations by default to the user
-                #filter special destinations here (ex.: creating 'staff' property)
-                destinations = BaseDestination.objects.all()
-                user.basedestination_set.add(*destinations)
             
             password = attrs.get('password', None)
             if password is not None:
@@ -55,9 +42,10 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
             
             user.is_staff = attrs.get('is_staff', user.is_staff)
             
+            return user
+            
         return User(**attrs)
     
-
 class LocalDestinationSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = LocalDestination
@@ -83,32 +71,26 @@ class DestinationSerializer(serializers.HyperlinkedModelSerializer):
     def get_fields(self, *args, **kwargs):
         fields = super(DestinationSerializer, self).get_fields(*args, **kwargs)
         request = self.context.get('request', None)
-        #view = self.context.get('view', None)
         
         #if not admin
         if not request.user.is_staff:
             #remove these fields
-            for field in ('type'
+            for field in ( 'type'
                          , 'localdestination'
                          , 'sftpdestination'
                          , 'date_created'
                          , 'date_modified'):
                 fields.pop(field)
-        
         return fields
     
     def validate(self, attrs):
         return super(DestinationSerializer, self).validate(attrs)
     
     def restore_object(self, attrs, instance=None):
-        
         new_attrs = dict()
         new_attrs['name'] = attrs['name']
         
         if instance:
-            print instance.__class__
-            print instance.__class__.__name__
-            print instance
             instance.name = attrs.get('name', instance.name)
             
             if instance.type == 'LocalDestination':
@@ -139,14 +121,14 @@ class DestinationSerializer(serializers.HyperlinkedModelSerializer):
             raise Exception('destination type is not implemented')    
 
 class BackupSerializer(serializers.HyperlinkedModelSerializer):
-    destination = serializers.Field(source='destination')
+    destination = serializers.SlugRelatedField(slug_field='name')
     
     class Meta:
         model = Backup
-        fields = ('id', 'url')
-
-    def restore_object(self, attrs, instance=None):
-        return super(BackupSerializer, self).restore_object(attrs, instance)
+        fields = ('id', 'url', 'name', 'file', 'destination', 'date')
     
-
+    #overrides user attribute with current logged in user
+    def restore_object(self, attrs, instance=None):
+        attrs[u'user'] = self.context.get('request').user
+        return Backup(**attrs)
     

@@ -23,6 +23,8 @@ class Backup(NameableMixin, LoggableMixin):
     success     = models.BooleanField(default=False)    
     obs         = models.TextField(null=True,
                                    blank=True)
+    file = models.FileField(upload_to='./test_backup/', null=True)
+    
     '''Restore data and consequences:
             (date,
             emergency backup before restore,
@@ -39,7 +41,6 @@ class Backup(NameableMixin, LoggableMixin):
     class Meta:
         app_label = 'server'
         #unique_together = ('name', 'origin', 'destination', 'date')
-    
     
     def backup(self, contents, before_restore=False, after_restore=False):
         #shortcut
@@ -66,7 +67,7 @@ class Backup(NameableMixin, LoggableMixin):
                 self.obs = u'Backup de resguardo %s bem sucedido!' % (
                     self.related_to.restore_dt.strftime(settings.DT_FORMAT_VERBOSE))
             self.save()
-        return success    
+        return success
     
     def restore(self):
         contents, success = self.destination.restore(

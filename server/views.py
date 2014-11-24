@@ -217,7 +217,8 @@ def backup_file(django_file, from_origin, to_destination,
 
 from django.contrib.auth.models import User, AnonymousUser
 from django.core.exceptions import FieldError
-from rest_framework import viewsets, views, status, permissions
+from django.core.servers.basehttp import FileWrapper
+from rest_framework import viewsets, views, status, permissions, parsers, mixins, filters
 from rest_framework.authentication import BasicAuthentication, SessionAuthentication, TokenAuthentication
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
@@ -231,13 +232,13 @@ class UserViewSet(viewsets.ModelViewSet):
     
     def list(self, request):
         user = request.user
-        q = request.QUERY_PARAMS
+        q = request.GET
         q_type = q.get('query_type', None)
         
         #if AnonymousUser or logged in user with param query_type=availability,
         #determines if username is available
         if isinstance(user, AnonymousUser) or (q_type is not None and q_type == 'availability'):
-            q_username = request.QUERY_PARAMS.get('username', None)
+            q_username = q.get('username', None)
             if q_username is None:
                 return Response({'error': 'No username specified'})
             
@@ -248,20 +249,23 @@ class UserViewSet(viewsets.ModelViewSet):
         
         return super(UserViewSet, self).list(request)
     
-    @detail_route(methods=['post'])
-    def set_password(self, request, pk=None):
-        user = self.get_object()
-        serializer = PasswordSerializer(data=request.DATA)
-        if serializer.is_valid():
-            user.set_password(serializer.data['password'])
-            user.save()
-            return Response({'status': 'password set'})
-        else:
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-        
+    def update(self, request, *args, **kwargs):
+        self.object = self.get_object_or_none()
+        user = request.user
+        if not user.is_superuser and not user.is_staff and self.object and self.object != request.user:
+            return Response({'error': 'You are not authorized to run this action'},
+                            status=status.HTTP_403_FORBIDDEN)
+        return super(UserViewSet, self).update(request, *args, **kwargs)
+    
+    def patch(self, request, *args, **kwargs):
+        self.object = self.get_object_or_none()
+        user = request.user
+        if not user.is_superuser and not user.is_staff and self.object and self.object != request.user:
+            return Response({'error': 'You are not authorized to run this action'},
+                            status=status.HTTP_403_FORBIDDEN)
+        return super(UserViewSet, self).patch(request, *args, **kwargs)
+    
     def get_queryset(self):
-        
         #filters by kwargs or QUERY_PARAMS
         username = self.kwargs.get('username', self.request.QUERY_PARAMS.get('username', None))
         if username is not None:
@@ -273,47 +277,76 @@ class UserViewSet(viewsets.ModelViewSet):
             return User.objects.all()
         #filter current user
         return User.objects.filter(username=user)
+    
+    
 
-class PrivateModelViewSet(viewsets.ModelViewSet):
-    permission_class = permissions.IsAuthenticatedOrReadOnly
+class PrivateModelMixin(object):
+    permission_class = permissions.DjangoModelPermissionsOrAnonReadOnly
     
     def get_queryset(self):
         user = self.request.user
         if isinstance(user, AnonymousUser):
             return []
         elif user.is_superuser:
-            return super(PrivateModelViewSet, self).get_queryset()
+            return super(PrivateModelMixin, self).get_queryset()
         else:
-            qs = super(PrivateModelViewSet, self).get_queryset()
-            print qs
+            qs = super(PrivateModelMixin, self).get_queryset()
             try:
                 return qs.filter(user__id=user.id)
             except FieldError:
-                try:
-                    return qs.filter(users__id=user.id)
-                except FieldError:
-                    return qs
+                return qs
     
-class DestinationViewSet(PrivateModelViewSet):
+class DestinationViewSet(PrivateModelMixin, viewsets.ReadOnlyModelViewSet):
     queryset = BaseDestination.objects.all()
     serializer_class = DestinationSerializer
     
-class BackupViewSet(PrivateModelViewSet):
+class BackupViewSet(PrivateModelMixin,
+                    mixins.CreateModelMixin,
+                    mixins.RetrieveModelMixin,
+                    mixins.ListModelMixin,
+                    viewsets.GenericViewSet):
+    parser_classes = (parsers.MultiPartParser,parsers.FormParser)
     queryset = Backup.objects.all()
     serializer_class = BackupSerializer
+    permission_class = permissions.IsAuthenticatedOrReadOnly
     
+    def retrieve(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        fileformat = request.GET.get('fileformat', None)
+        
+        if fileformat == 'raw':
+            file_response = HttpResponse(FileWrapper(self.object.file), content_type='application/zip')
+            file_response['Content-Disposition'] = 'attachment; filename="%s"' % self.object.name
+            return file_response
+        
+        serializer = self.get_serializer(self.object)
+        return Response(serializer.data)
     
-#
-#class UserAvailableView(generics.ListAPIView):
-#    serializer_class = UserSerializer
-#    
-#    def get_queryset(self, request, *args, **kwargs):
-#        username = request.DATA.get('username', None)
-#        
-#        if username:
-#            queryset = queryset.filter(username=username)
-#            
-#        return queryset
-#    
-#    def get(self, request, *args, **kwargs):
-#        return Response({'available': })
+    def list(self, request, *args, **kwargs):
+        self.object_list = self.filter_queryset(self.get_queryset())
+        
+        if self.object_list.count() == 1:
+            self.object = self.object_list[0]
+            
+            fileformat = request.GET.get('fileformat', None)
+            if fileformat == 'raw':
+                file_response = HttpResponse(FileWrapper(self.object.file), content_type='application/zip')
+                file_response['Content-Disposition'] = 'attachment; filename="%s"' % self.object.name
+                return file_response
+        return super(BackupViewSet, self).list(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        fields = (
+            ('name', 'name__contains'),
+            ('destination','destination__name__contains'),
+            ('date', 'date'),
+            ('min_date', 'date__gte'),
+            ('max_date', 'date__lte')
+        )
+        
+        query = { datafield : self.request.GET[reqfield]
+                  for reqfield, datafield in fields
+                  if self.request.GET.get(reqfield, None)
+                }
+                
+        return Backup.objects.filter(**query)

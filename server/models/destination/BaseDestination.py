@@ -9,7 +9,7 @@ from ..mixins import (
 
 class BaseDestination(NameableMixin, LoggableMixin):
     
-    users     = models.ManyToManyField(User)
+    #users     = models.ManyToManyField(User, related_name='destinations')
     directory = models.CharField(verbose_name=u'diretório',
                                  max_length=1024,
                                  blank=True,
