@@ -41,7 +41,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-   # 'rest_framework_swagger',
+    'rest_framework_swagger',
     'south',
     'django_extensions',
     'server',
@@ -58,39 +58,30 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication'
     )
 }
-#SWAGGER_SETTINGS = {
-#    "exclude_namespaces": [],
-#    "api_version": '0.1',
-#    "api_path": "/",
-#    "enabled_methods": [
-#        'get',
-#        'post',
-#        'put',
-#        'patch',
-#        'delete'
-#    ],
-#    "api_key": '',
-#    "is_authenticated": False,
-#    "is_superuser": False,
-#    "permission_denied_handler": None,
-#    "info": {
-#        'contact': 'apiteam@wordnik.com',
-#        'description': 'This is a sample server Petstore server. '
-#                       'You can find out more about Swagger at '
-#                       '<a href="http://swagger.wordnik.com">'
-#                       'http://swagger.wordnik.com</a> '
-#                       'or on irc.freenode.net, #swagger. '
-#                       'For this sample, you can use the api key '
-#                       '"special-key" to test '
-#                       'the authorization filters',
-#        'license': 'Apache 2.0',
-#        'licenseUrl': 'http://www.apache.org/licenses/LICENSE-2.0.html',
-#        'termsOfServiceUrl': 'http://helloreverb.com/terms/',
-#        'title': 'Swagger Sample App',
-#    },
-#}
-
-
+SWAGGER_SETTINGS = {
+    "exclude_namespaces": [],
+    "api_version": '0.1',
+    "api_path": "/",
+    "enabled_methods": [
+        'get',
+        'post',
+        'put',
+        'patch',
+        'delete'
+    ],
+    "api_key": '',
+    "is_authenticated": True,
+    "is_superuser": True,
+    "permission_denied_handler": None,
+    "info": {
+        'contact': '',
+        'description': '',
+        'license': '',
+        'licenseUrl': '',
+        'termsOfServiceUrl': '',
+        'title': 'Tbackup-server API Docs',
+    },
+}
 
 LOGIN_REDIRECT_URL = '/'
 
