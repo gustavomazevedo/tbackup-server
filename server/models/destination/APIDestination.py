@@ -3,7 +3,7 @@
 from .BaseDestination import BaseDestination
 from ..mixins     import APIMixin
 
-class APIDestination(BaseDestination, APIMixin):
+class APIDestination(APIMixin, BaseDestination):
     
     def backup(self, *args, **kwargs):
         print "Hello! This is %s's backup method" % self.__class__.__name__

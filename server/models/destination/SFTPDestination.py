@@ -10,7 +10,7 @@ from django.db import models
 from .BaseDestination import BaseDestination
 from ..mixins     import AccessableMixin
 
-class SFTPDestination(BaseDestination, AccessableMixin):
+class SFTPDestination(AccessableMixin, BaseDestination):
     
     def connect(self):
         client = paramiko.SSHClient()

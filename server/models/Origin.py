@@ -15,7 +15,7 @@ from .mixins import (
     LoggableMixin
 )
 
-class Origin(NameableMixin, LoggableMixin):
+class Origin(NameableMixin, LoggableMixin, models.Model):
     plan   = models.TextField(verbose_name=u"plano")
     apikey = models.CharField(max_length=256)
     

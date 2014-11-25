@@ -7,7 +7,7 @@ from ..mixins import (
     LoggableMixin
 )
 
-class BaseDestination(NameableMixin, LoggableMixin):
+class BaseDestination(NameableMixin, LoggableMixin, models.Model):
     
     #users     = models.ManyToManyField(User, related_name='destinations')
     directory = models.CharField(verbose_name=u'diretório',

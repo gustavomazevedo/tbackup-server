@@ -15,7 +15,7 @@ from .mixins import (
     LoggableMixin
 )
 
-class Backup(NameableMixin, LoggableMixin):
+class Backup(NameableMixin, LoggableMixin, models.Model):
     #origin     = models.ForeignKey(Origin)
     user        = models.ForeignKey(User)
     destination = models.ForeignKey(BaseDestination)
