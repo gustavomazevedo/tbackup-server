@@ -20,9 +20,9 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         
     def get_fields(self, *args, **kwargs):
         fields = super(UserSerializer, self).get_fields(*args, **kwargs)
-        user = self.context.get('request', None).user
+        request = self.context.get('request', None)
         
-        if not user.is_staff:
+        if not request or not request.user.is_staff:
             fields['is_staff'].read_only = True
             
         return fields
@@ -73,7 +73,7 @@ class DestinationSerializer(serializers.HyperlinkedModelSerializer):
         request = self.context.get('request', None)
         
         #if not admin
-        if not request.user.is_staff:
+        if not request or not request.user.is_staff:
             #remove these fields
             for field in ( 'type'
                          , 'localdestination'
