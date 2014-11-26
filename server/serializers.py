@@ -28,23 +28,21 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         return fields
     
     def restore_object(self, attrs, instance=None):
+        user = None
         if instance is not None:
-            user = None
-            try:
-                user = User.objects.get(username=attrs['username'])
-                user.email = attrs.get('email', user.email)
-            except User.DoesNotExist:
-                user = User(email=attrs['email'], username=attrs['username'])
+            user = instance    
+            user.email = attrs.get('email', user.email)
+            if user.is_staff or user.is_superuser:
+                user.is_staff = attrs.get('is_staff', user.is_staff)
+
+        else:
+            user = User(**attrs)
             
-            password = attrs.get('password', None)
-            if password is not None:
-                user.set_password(password)
-            
-            user.is_staff = attrs.get('is_staff', user.is_staff)
-            
-            return user
-            
-        return User(**attrs)
+        password = attrs.get('password', None)
+        if password is not None:
+            user.set_password(password)
+        
+        return user
     
 class LocalDestinationSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:

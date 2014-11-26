@@ -64,10 +64,8 @@ def return_or_error(request, id, action):
 def get_authentication_error(request, id):
     if not id:
         #import ipdb; ipdb.set_trace()
-        print 'not id'
         return HttpResponseForbidden()
     elif not authenticated(id, request.GET.dict()):
-        print 'not authenticated'
         #import ipdb; ipdb.set_trace()
         return HttpResponseForbidden()
     return None
