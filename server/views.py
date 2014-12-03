@@ -297,7 +297,20 @@ class PrivateModelMixin(object):
 class DestinationViewSet(PrivateModelMixin, viewsets.ReadOnlyModelViewSet):
     queryset = BaseDestination.objects.all()
     serializer_class = DestinationSerializer
+
+
+class IsOwnerOrSuperuser(permissions.BasePermission):
     
+    def has_permission(self, request, view):
+        if isinstance(request.user, AnonymousUser):
+            return False
+        return True
+    
+    def has_object_permission(self, request, view, obj):
+        return request.user.is_superuser or obj.user == request.user
+        
+    
+
 class BackupViewSet(PrivateModelMixin,
                     mixins.CreateModelMixin,
                     mixins.RetrieveModelMixin,
@@ -306,7 +319,7 @@ class BackupViewSet(PrivateModelMixin,
     parser_classes = (parsers.MultiPartParser,parsers.FormParser)
     queryset = Backup.objects.all()
     serializer_class = BackupSerializer
-    permission_class = permissions.IsAuthenticatedOrReadOnly
+    permission_classes = (IsOwnerOrSuperuser,)
     
     def retrieve(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -346,5 +359,8 @@ class BackupViewSet(PrivateModelMixin,
                   for reqfield, datafield in fields
                   if self.request.GET.get(reqfield, None)
                 }
-                
+        
+        if not self.request.user.is_superuser:
+            query.update({'user': self.request.user})
+            
         return Backup.objects.filter(**query)
