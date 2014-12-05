@@ -264,17 +264,25 @@ class UserViewSet(viewsets.ModelViewSet):
         return super(UserViewSet, self).patch(request, *args, **kwargs)
     
     def get_queryset(self):
-        #filters by kwargs or QUERY_PARAMS
-        username = self.kwargs.get('username', self.request.QUERY_PARAMS.get('username', None))
-        if username is not None:
-            return User.objects.filter(username=username)
-        
-        #if admin, no filter applied
         user = self.request.user
+        username = self.kwargs.get('username', self.request.QUERY_PARAMS.get('username', None))
+            
+        #if admin
         if user.is_superuser:
-            return User.objects.all()
-        #filter current user
-        return User.objects.filter(username=user)
+            if username is not None:
+                #filters by username
+                return User.objects.filter(username=username)
+            else:
+                #does not filter
+                return User.objects.all()
+        
+        #else, only allow regular user to filter its own name
+        if not username or username == user.username:
+            #filters own name
+            return User.objects.filter(username=user)
+        else:
+            #empty result
+            return []
     
     
 
