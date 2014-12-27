@@ -331,28 +331,28 @@ class BackupViewSet(PrivateModelMixin,
     
     def retrieve(self, request, *args, **kwargs):
         self.object = self.get_object()
-        fileformat = request.GET.get('fileformat', None)
-        
-        if fileformat == 'raw':
-            file_response = HttpResponse(FileWrapper(self.object.file), content_type='application/zip')
-            file_response['Content-Disposition'] = 'attachment; filename="%s"' % self.object.name
-            return file_response
-        
+        response = self.file_as_download(request)
+        if response:
+            return response
         serializer = self.get_serializer(self.object)
         return Response(serializer.data)
     
     def list(self, request, *args, **kwargs):
         self.object_list = self.filter_queryset(self.get_queryset())
-        
         if self.object_list.count() == 1:
             self.object = self.object_list[0]
-            
-            fileformat = request.GET.get('fileformat', None)
-            if fileformat == 'raw':
-                file_response = HttpResponse(FileWrapper(self.object.file), content_type='application/zip')
-                file_response['Content-Disposition'] = 'attachment; filename="%s"' % self.object.name
-                return file_response
+            response = self.file_as_download(request)
+            if response:
+                return response
         return super(BackupViewSet, self).list(request, *args, **kwargs)
+    
+    def file_as_download(self, request):
+        fileformat = request.GET.get('fileformat', None)
+        if fileformat == 'raw':
+            file_response = HttpResponse(FileWrapper(self.object.file), content_type='application/zip')
+            file_response['Content-Disposition'] = 'attachment; filename="%s"' % self.object.name
+            return file_response
+        return None
     
     def get_queryset(self):
         fields = (
