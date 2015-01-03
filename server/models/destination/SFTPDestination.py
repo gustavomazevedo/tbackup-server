@@ -13,23 +13,25 @@ from ..mixins     import AccessableMixin
 class SFTPDestination(AccessableMixin, BaseDestination):
     
     def connect(self):
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.load_system_host_keys()
-        pvtkey = paramiko.RSAKey.from_private_key_file(self.key_filename)
+        self.client = paramiko.SSHClient()
+        self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.client.load_system_host_keys()
+        pvtkey = paramiko.RSAKey.from_private_key_file(os.path.expanduser(self.key_filename))
         
-        client.connect(hostname=self.hostname,
+        self.client.connect(hostname=self.hostname,
                        port=int(self.port),
                        username=self.username,
                        pkey=pvtkey,
                        timeout=5.0)
-        return client.open_sftp()
+        return self.client.open_sftp()
     
     def backup(self, contents, subdir, filename, *args, **kwargs):
         #print "Hello! This is %s's backup method" % self.__class__.__name__
 
         fd = os.path.join(self.directory, subdir)
-
+        
+        sftp = None
+        
         try:
             sftp = self.connect()
             if not self._rexists(sftp,subdir):
@@ -47,9 +49,14 @@ class SFTPDestination(AccessableMixin, BaseDestination):
                 logging.error(e, errno)
                 raise
             sftp.close()
+            if self.client:
+                self.client.close()
             return True
         except:
-            sftp.close()
+            if sftp:
+                sftp.close()
+            if self.client:
+                self.client.close()
             raise
 
     
