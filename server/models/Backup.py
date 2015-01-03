@@ -1,5 +1,6 @@
 #-*- coding: utf-8 -*-
 
+import os
 from datetime import datetime
 
 from django.db import models
@@ -82,3 +83,17 @@ class Backup(NameableMixin, LoggableMixin, models.Model):
             self.save()
             return contents
         return None
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.core.files import File
+
+@receiver(post_save, sender=Backup)
+def backup_to_destination(sender, instance=None, created=False, **kwargs):
+    if created and instance.file:
+        instance.backup(File(instance.file))
+        if os.path.isfile(instance.file.path):
+            os.remove(instance.file.path)
+            instance.file = None
+            instance.save()
+
