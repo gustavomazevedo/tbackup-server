@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.conf import settings
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import StreamingHttpResponse, HttpResponse, HttpResponseNotFound, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 # Create your views here.
@@ -349,9 +349,19 @@ class BackupViewSet(PrivateModelMixin,
     def file_as_download(self, request):
         fileformat = request.GET.get('fileformat', None)
         if fileformat == 'raw':
-            file_response = HttpResponse(FileWrapper(self.object.file), content_type='application/zip')
-            file_response['Content-Disposition'] = 'attachment; filename="%s"' % self.object.name
-            return file_response
+            #if offline file is available
+            if self.object.file:
+                f = self.object.file
+            #else try to restore from destination
+            else:
+                try:
+                    f = self.object.restore()
+                except Exception, e:
+                    raise
+            if f:
+                file_response = StreamingHttpResponse(FileWrapper(f), content_type='application/zip')
+                file_response['Content-Disposition'] = 'attachment; filename="%s"' % self.object.name
+                return file_response
         return None
     
     def get_queryset(self):
