@@ -128,5 +128,8 @@ class BackupSerializer(serializers.HyperlinkedModelSerializer):
     #overrides user attribute with current logged in user
     def restore_object(self, attrs, instance=None):
         attrs[u'user'] = self.context.get('request').user
-        return Backup(**attrs)
+        backup = Backup(**attrs)
+        if backup.file:
+            backup.file.name = backup.name
+        return backup
     
