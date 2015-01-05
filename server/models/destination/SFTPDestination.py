@@ -12,6 +12,8 @@ from ..mixins     import AccessableMixin
 
 class SFTPDestination(AccessableMixin, BaseDestination):
     
+    client = None
+    
     def connect(self):
         self.client = paramiko.SSHClient()
         self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
