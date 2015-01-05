@@ -20,8 +20,8 @@ class Origin(NameableMixin, LoggableMixin, models.Model):
     apikey = models.CharField(max_length=256)
     
     class Meta:
-        verbose_name        = u"origem"
-        verbose_name_plural = u"origens"
+        verbose_name        = u"cliente"
+        verbose_name_plural = u"clientes"
         app_label = u"server"
     
     def save(self, *args, **kwargs):
