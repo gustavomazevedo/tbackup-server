@@ -125,7 +125,6 @@ class DestinationCase(TestCase):
     def tearDownClass(cls):
         rm_dir_files('Guadalupe')
         rm_dir_files(PATH)
-        rm_dir_files('test_backup')
         
     def test_localbackup(self):
         
