@@ -9,6 +9,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 
 import os
+import shutil
 import subprocess
 import time
 import paramiko
@@ -41,6 +42,22 @@ def mock_sftp_connect(self):
 
 def create_sftp_server():
     return subprocess.Popen(['sftpserver', '-k', 'test_rsa.key', '-l', 'WARNING'])
+
+def rm_dir_files(dirname):
+    for fname in os.listdir(dirname):
+        file_path = os.path.join(dirname, fname)
+        try:
+            if os.path.isfile(file_path) and 'reactive_course source code_reactive-week1.zip' not in file_path:
+                print 'remove file %s' % file_path
+                os.remove(file_path)
+            elif os.path.isdir(file_path):
+                print 'remove dir %s' % file_path
+                rm_dir_files(file_path)
+                shutil.rmtree(file_path)
+        except Exception, e:
+            print 'ERROR %s' % e
+            pass
+        
     
 # Create your tests here.
 
@@ -103,6 +120,12 @@ class DestinationCase(TestCase):
         )
         
         self.fn = os.path.join(PATH, 'reactive_course source code_reactive-week1.zip')
+    
+    @classmethod
+    def tearDownClass(cls):
+        rm_dir_files('Guadalupe')
+        rm_dir_files(PATH)
+        rm_dir_files('test_backup')
         
     def test_localbackup(self):
         
@@ -173,8 +196,6 @@ class DestinationCase(TestCase):
         self.assertIsNone(b.restore_dt)
         self.assertIsNone(b.related_to)
         
-            
-        
         
     def test_sftprestore(self):
         proc = create_sftp_server()
@@ -193,6 +214,7 @@ class DestinationCase(TestCase):
         self.assertIsNotNone(data)
         self.assertEquals(''.join(data), open(self.fn, 'rb').read())
 
+    
 class APILoginTestCase(APITestCase):
     def setUp(self):
         users = [
