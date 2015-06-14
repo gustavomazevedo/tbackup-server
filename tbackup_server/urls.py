@@ -1,5 +1,4 @@
 from django.conf.urls import patterns, include, url
-from django.views.generic import RedirectView
 
 from django.contrib import admin
 admin.autodiscover()
@@ -12,7 +11,6 @@ router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'destinations', DestinationViewSet)
 router.register(r'backups', BackupViewSet)
-#router.register(r'rrules', RRuleViewSet)
 
 from rest_framework.authtoken.views import obtain_auth_token
 
